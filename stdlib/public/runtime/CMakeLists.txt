@@ -115,6 +115,10 @@ add_swift_target_library(swiftRuntime OBJECT_LIBRARY
   SWIFT_COMPILE_FLAGS ${SWIFT_STANDARD_LIBRARY_SWIFT_FLAGS}
   INSTALL_IN_COMPONENT never_install)
 
+include(LLVMIRUtil)
+llvmir_attach_bc_target(swiftRuntime_bc swiftRuntime-linux-x86_64)
+llvmir_attach_link_target(TARGET swiftRuntime_allbc DEPENDS swiftRuntime_bc)
+
 set(ELFISH_SDKS)
 set(COFF_SDKS)
 foreach(sdk ${SWIFT_SDKS})

@@ -300,6 +300,7 @@ endif()
 add_swift_target_library(swiftCore
                   ${SWIFT_STDLIB_LIBRARY_BUILD_TYPES} IS_STDLIB IS_STDLIB_CORE
                     ${SWIFTLIB_SOURCES}
+		  DEPENDS swiftRuntime_allbc
                   GYB_SOURCES
                     ${SWIFTLIB_GYB_SOURCES}
                   # The copy_shim_headers target dependency is required to let the

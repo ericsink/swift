@@ -520,6 +520,8 @@ function(_compile_swift_files
     set(sibopt_file "${module_base}.O.sib")
     set(sibgen_file "${module_base}.sibgen")
 
+    set(bc_file "${module_dir}/${SWIFTFILE_MODULE_NAME}.bc")
+
     if(SWIFT_ENABLE_MODULE_INTERFACES)
       set(interface_file "${module_base}.swiftinterface")
       set(interface_file_static "${module_base_static}.swiftinterface")
@@ -527,10 +529,10 @@ function(_compile_swift_files
            "-emit-module-interface-path" "${interface_file}")
     endif()
 
-    if (NOT SWIFTFILE_IS_STDLIB_CORE)
-      list(APPEND swift_module_flags
-           "-Xfrontend" "-experimental-skip-non-inlinable-function-bodies")
-    endif()
+    #if (NOT SWIFTFILE_IS_STDLIB_CORE)
+    #list(APPEND swift_module_flags
+    #"-Xfrontend" "-experimental-skip-non-inlinable-function-bodies")
+    #endif()
 
     set(module_outputs "${module_file}" "${module_doc_file}")
 
@@ -791,6 +793,24 @@ function(_compile_swift_files
   # We only build these when we are not producing a main file. We could do this
   # with sib/sibgen, but it is useful for looking at the stdlib.
   if (NOT SWIFTFILE_IS_MAIN)
+    message(STATUS "bc_file: ${bc_file}")
+    add_custom_command_target(
+        module_bc_dependency_target
+        COMMAND
+          "$<TARGET_FILE:Python3::Interpreter>" "${line_directive_tool}" "@${file_path}" --
+          "${swift_compiler_tool}" "-emit-bc" "-o" "${bc_file}"
+          "-avoid-emit-module-source-info"
+          ${swift_flags} ${swift_module_flags} "@${file_path}"
+        COMMAND "${CMAKE_COMMAND}" -E touch ${bc_file}
+        OUTPUT ${bc_file}
+        DEPENDS
+          ${swift_compiler_tool_dep}
+          ${source_files} ${SWIFTFILE_DEPENDS}
+          ${swift_ide_test_dependency}
+          ${create_dirs_dependency_target}
+          ${copy_legacy_layouts_dep}
+        COMMENT "Generating ${bc_file}")
+
     add_custom_command_target(
         module_dependency_target
         COMMAND
@@ -811,6 +831,7 @@ function(_compile_swift_files
           ${swift_ide_test_dependency}
           ${create_dirs_dependency_target}
           ${copy_legacy_layouts_dep}
+          ${module_bc_dependency_target}
         COMMENT "Generating ${module_file}")
 
     if(SWIFTFILE_STATIC)
